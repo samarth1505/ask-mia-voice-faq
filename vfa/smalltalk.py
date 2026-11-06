@@ -32,6 +32,10 @@ BYE_REPLY = "Thanks for calling — take care, and goodbye!"
 HOLD_REPLY = "Sure, take your time — I'm here when you're ready."
 ACK_REPLY = "Got it. Is there anything else I can help you with?"
 
+# every canned reply, so the server can pre-synthesize their audio once at startup
+# (instant + zero TTS cost per turn — small talk never waits on live synthesis).
+REPLIES = [BOT_REPLY, WELL_REPLY, GREET_REPLY, THANK_REPLY, BYE_REPLY, HOLD_REPLY, ACK_REPLY]
+
 # --- trigger vocabularies (single tokens), highest priority first ---------------
 _BYE = {"bye", "goodbye", "cya", "farewell", "adios", "ciao"}
 _THANK = {"thanks", "thank", "thankyou", "thx", "ty", "cheers", "appreciate", "appreciated", "thankful"}
@@ -45,7 +49,7 @@ _ACK = {"ok", "okay", "okey", "k", "kk", "sure", "cool", "alright", "allright", 
 # Non-trigger filler tokens that are allowed to co-occur without making it "substantive".
 _FILLERS = {"a", "an", "the", "you", "your", "u", "i", "me", "my", "is", "this", "that", "it",
             "am", "are", "be", "to", "and", "so", "well", "then", "now", "there", "please",
-            "oh", "on", "one", "just", "of", "good", "ana", "very", "much", "really", "mate"}
+            "oh", "on", "one", "just", "of", "good", "ana", "very", "much", "really", "mate", "lot"}
 
 _PRIORITY = (
     (_BYE, "goodbye", BYE_REPLY),
@@ -67,6 +71,7 @@ _BOT_RE = re.compile(
 _WELL_RE = re.compile(
     r"how'?s it going|how is it going|how are you(?:\s+(?:doing|today|going|feeling))?"
     r"|how r u|how are things|how do you do|how you doing|how are ya"
+    r"|what'?s up|whats up|what is up"
     r"|hope you(?:'?re| are) (?:well|doing well)")
 _CLOSE_RE = re.compile(
     r"that'?s (?:all|it)|that is (?:all|it)|nothing else|no more questions"

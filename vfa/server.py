@@ -10,12 +10,15 @@ Run:  VFA_REAL_MODELS=1 ./.venv312/bin/python -m vfa.server   (then open http://
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
+import os
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
+from . import smalltalk
 from .config import load_settings
 from .factory import build_auto
 from .kb.ingest import load_kb
@@ -45,6 +48,12 @@ class Agent:
         self._fillers: dict[str, str] = {}   # phrase -> audio_b64 (pre-synth once at startup)
         for _ph in FILLERS:
             self._fillers[_ph] = self.tts_b64(_ph)
+        # Pre-synthesize the greeting + every canned small-talk reply once, so those turns are
+        # INSTANT and spend no TTS credits per call. Small talk then never waits on live
+        # synthesis (which is what used to push a simple "hi" past the client filler timer).
+        self._canned: dict[str, str] = {GREETING: self.tts_b64(GREETING)}
+        for _ph in smalltalk.REPLIES:
+            self._canned[_ph] = self.tts_b64(_ph)
 
     def _deepgram(self):
         if self.settings.deepgram_api_key:
@@ -83,10 +92,29 @@ class Agent:
     def tts_b64(self, text: str) -> str:
         if not (text and self.eleven):
             return ""
+        # Persistent disk cache: synthesize each distinct phrase at most once EVER (keyed by
+        # voice+model+text), so greetings / fillers / small-talk audio are NOT re-synthesized
+        # on every restart — that avoids re-spending ElevenLabs credits. (data/ is gitignored)
+        s = self.settings
+        cdir = os.path.join(s.audio_dir, "tts_cache")
+        key = hashlib.sha256(f"{s.elevenlabs_voice_id}|{s.elevenlabs_model_id}|{text}".encode()).hexdigest()[:20]
+        path = os.path.join(cdir, key + ".mp3")
         try:
-            return base64.b64encode(self.eleven.synthesize_bytes(text)).decode("ascii")
+            if os.path.exists(path):
+                return base64.b64encode(open(path, "rb").read()).decode("ascii")
         except Exception:
-            return ""   # graceful: UI still shows the text
+            pass
+        try:
+            data = self.eleven.synthesize_bytes(text)
+        except Exception:
+            return ""   # graceful (e.g. quota exceeded): UI still shows the text
+        try:
+            os.makedirs(cdir, exist_ok=True)
+            with open(path, "wb") as f:
+                f.write(data)
+        except Exception:
+            pass
+        return base64.b64encode(data).decode("ascii")
 
     def turn_from_text(self, text: str, stt_ms: float = 0.0) -> dict:
         with self.lock:
@@ -96,7 +124,9 @@ class Agent:
             r = self.orch.handle_turn(self.call_id, self.turn, text)
             pipeline_ms = (time.perf_counter() - t0) * 1000.0
         t1 = time.perf_counter()
-        audio = self.tts_b64(r.response or "")
+        # small-talk / greeting replies are pre-synth'd -> served from cache (instant, free);
+        # only real answers hit live TTS.
+        audio = self._canned.get(r.response or "") or self.tts_b64(r.response or "")
         tts_ms = (time.perf_counter() - t1) * 1000.0
         return {
             "transcript": r.utterance,
@@ -153,7 +183,7 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path == "/api/variant":
             self._json({"variant": AGENT.variant})
         elif self.path == "/api/greeting":
-            self._json({"response": GREETING, "audio_b64": AGENT.tts_b64(GREETING)})
+            self._json({"response": GREETING, "audio_b64": AGENT._canned.get(GREETING, "")})
         elif self.path == "/api/filler":
             self._json(AGENT.filler())
         elif self.path == "/api/fillers":

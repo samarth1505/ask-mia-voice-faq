@@ -69,11 +69,13 @@ function playFiller() {
   play(fillers[Math.floor(Math.random() * fillers.length)],
        () => { if (calling && state === "speaking") setState("listening", "Listening…"); });
 }
-// wraps a turn: if the answer isn't back in 400 ms, speak a filler; the answer cuts it off
+// wraps a turn: only if the answer is genuinely slow (a real KB lookup / LLM turn) do we
+// speak a filler; the answer then cuts it off. Small talk + greetings come back well under
+// this (their audio is pre-synth'd server-side), so "hi"/"thanks" never get a filler.
 async function runTurn(fetchPromise) {
   setState("thinking", "…");
   let responded = false;
-  const timer = setTimeout(() => { if (!responded) playFiller(); }, 700);   // only when it's actually slow
+  const timer = setTimeout(() => { if (!responded) playFiller(); }, 1200);
   let d;
   try { d = await fetchPromise; }
   catch (e) { clearTimeout(timer); if (calling) setState("listening", "Listening…"); return; }
