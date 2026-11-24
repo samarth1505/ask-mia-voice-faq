@@ -1,9 +1,9 @@
-# Ask Ana — Voice FAQ Agent for Payments
+# Ask Mia — Voice FAQ Agent for Payments
 
-**Ana** is a reliability-first voice FAQ agent for payment support. The first-order
+**Mia** is a reliability-first voice FAQ agent for payment support. The first-order
 constraint is **zero wrong answers**: below its grounding/answerability bar the agent
 *escalates* (human callback + ticket) instead of guessing. Every spoken fact must trace
-back to the retrieved knowledge base — if it can't, Ana hands off to a human.
+back to the retrieved knowledge base — if it can't, Mia hands off to a human.
 
 > **Status:** offline-first core + real backends wired and verified.
 > Telephony is simulated (a browser call UI drives the same per-turn pipeline); the design
@@ -13,7 +13,7 @@ back to the retrieved knowledge base — if it can't, Ana hands off to a human.
 
 ## Why it's reliable (the design in one paragraph)
 
-Ana never free-associates. Each turn retrieves from the KB on **two independent paths**
+Mia never free-associates. Each turn retrieves from the KB on **two independent paths**
 (lexical BM25 + semantic vectors), and will only *speak* when the answer is grounded. A
 **triple-lock early-exit** serves a pre-synthesized answer when it's confident and both
 retrievers agree; otherwise a **grounded LLM** drafts a reply that must pass a **grounding
@@ -45,7 +45,7 @@ utterance ──┤
 
 ## The learning loop (safe, human-in-the-loop)
 
-Ana does **not** self-train — that would risk drift in a zero-wrong-answers system.
+Mia does **not** self-train — that would risk drift in a zero-wrong-answers system.
 Instead she tells you what to add to the KB:
 
 ```bash
@@ -53,7 +53,7 @@ python -m vfa.report            # or GET /api/report while the server runs
 ```
 
 The **unanswered-questions report** (`vfa/report.py`) reads the shadow log, clusters the
-questions Ana couldn't answer (paraphrases group together), shows the **nearest KB chunk**
+questions Mia couldn't answer (paraphrases group together), shows the **nearest KB chunk**
 each one almost matched, and gives an answer-rate. A human writes the missing FAQ; next
 call, it's answered.
 
@@ -61,7 +61,7 @@ call, it's answered.
 
 A tap-to-call web UI (`vfa/web/`, served by `vfa/server.py`) drives the real pipeline:
 
-- **Tap "Start call"** → a ring tone + "Calling…" state while it connects, then Ana greets you.
+- **Tap "Start call"** → a ring tone + "Calling…" state while it connects, then Mia greets you.
 - **Hands-free, continuous mic** with energy-based VAD and **barge-in** (just talk to interrupt).
 - **Mic picker** that de-prioritizes Continuity/phone mics on macOS.
 - **Live A/B switch** between retrieval paths (`auto` / `lexical` / `semantic` / kill switch).

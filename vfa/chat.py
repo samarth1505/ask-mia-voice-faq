@@ -1,4 +1,4 @@
-"""Interactive chat with the agent — type a question, get Ana's answer.
+"""Interactive chat with the agent — type a question, get Mia's answer.
 
 Run (text only):        python3 -m vfa.chat
 Real retrieval+models:  VFA_REAL_MODELS=1 ./.venv312/bin/python -m vfa.chat

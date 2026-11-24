@@ -22,11 +22,11 @@ import re
 
 from .util.text import normalize
 
-# --- canned, fact-free replies (Ana's voice) ---------------------------------
-BOT_REPLY = ("I'm Ana, an automated assistant — not a person — but I'm happy to help with "
+# --- canned, fact-free replies (Mia's voice) ---------------------------------
+BOT_REPLY = ("I'm Mia, an automated assistant — not a person — but I'm happy to help with "
              "your payment questions, and I can connect you to a human anytime.")
 WELL_REPLY = "I'm doing well, thank you for asking! What can I help you with today?"
-GREET_REPLY = "Hi there! I'm Ana. What can I help you with on your payments today?"
+GREET_REPLY = "Hi there! I'm Mia. What can I help you with on your payments today?"
 THANK_REPLY = "You're welcome! Is there anything else I can help you with?"
 BYE_REPLY = "Thanks for calling — take care, and goodbye!"
 HOLD_REPLY = "Sure, take your time — I'm here when you're ready."
@@ -49,7 +49,7 @@ _ACK = {"ok", "okay", "okey", "k", "kk", "sure", "cool", "alright", "allright", 
 # Non-trigger filler tokens that are allowed to co-occur without making it "substantive".
 _FILLERS = {"a", "an", "the", "you", "your", "u", "i", "me", "my", "is", "this", "that", "it",
             "am", "are", "be", "to", "and", "so", "well", "then", "now", "there", "please",
-            "oh", "on", "one", "just", "of", "good", "ana", "very", "much", "really", "mate", "lot"}
+            "oh", "on", "one", "just", "of", "good", "mia", "very", "much", "really", "mate", "lot"}
 
 _PRIORITY = (
     (_BYE, "goodbye", BYE_REPLY),
